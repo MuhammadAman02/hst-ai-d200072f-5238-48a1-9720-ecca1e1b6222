@@ -8,9 +8,9 @@ load_dotenv()
 os.environ["FRAMEWORK"] = "nicegui"
 
 # Import the NiceGUI app
-from app.frontend.nicegui_app import ui, app
+from app.frontend.nicegui_app import ui
 
-if __name__ == "__main__":
+if __name__ in {"__main__", "__mp_main__"}:
     port = int(os.getenv("PORT", 8000))
     host = os.getenv("HOST", "0.0.0.0")
     
