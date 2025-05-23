@@ -1,52 +1,65 @@
-from fastapi import Request, status
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
+from typing import Dict, Any, Type, Callable, Union
+import logging
 
-from .logging_config import get_logger
+# Get logger
+logger = logging.getLogger(__name__)
 
-logger = get_logger(__name__)
-
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    logger.error(f"HTTPException: {exc.status_code} {exc.detail} for {request.method} {request.url.path}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail},
-    )
-
-async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
-    error_messages = []
-    for error in exc.errors():
-        field = ".".join(str(loc) for loc in error["loc"])
-        message = error["msg"]
-        error_messages.append(f"Field '{field}': {message}")
+class ApplicationError(Exception):
+    """Base application exception."""
     
-    logger.warning(f"RequestValidationError: {error_messages} for {request.method} {request.url.path} - Body: {await request.body()}")
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": "Validation Error", "errors": exc.errors()},
-    )
+    def __init__(self, message: str, status_code: int = 500, details: Dict[str, Any] = None):
+        self.message = message
+        self.status_code = status_code
+        self.details = details or {}
+        super().__init__(self.message)
 
-async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
-    logger.warning(f"Pydantic ValidationError: {exc.errors()} for {request.method} {request.url.path}")
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": "Pydantic Validation Error", "errors": exc.errors()},
-    )
+class ValidationError(ApplicationError):
+    """Validation error exception."""
+    
+    def __init__(self, message: str, details: Dict[str, Any] = None):
+        super().__init__(message, status_code=400, details=details)
 
-async def unhandled_exception_handler(request: Request, exc: Exception):
-    logger.critical(f"Unhandled exception: {exc} for {request.method} {request.url.path}", exc_info=True)
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "An unexpected internal server error occurred."},
-    )
+class ProcessingError(ApplicationError):
+    """Processing error exception."""
+    
+    def __init__(self, message: str, details: Dict[str, Any] = None):
+        super().__init__(message, status_code=500, details=details)
 
-def register_exception_handlers(app):
-    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
-    app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
-    app.add_exception_handler(ValidationError, pydantic_validation_exception_handler)
-    app.add_exception_handler(Exception, unhandled_exception_handler)
-    logger.info("Custom exception handlers registered.")
+class ResourceNotFoundError(ApplicationError):
+    """Resource not found exception."""
+    
+    def __init__(self, message: str, details: Dict[str, Any] = None):
+        super().__init__(message, status_code=404, details=details)
 
-# The registration function should be called in the main application setup (app/__init__.py)
+# Exception handler mapping
+exception_handlers: Dict[Type[Exception], Callable] = {}
+
+def register_exception_handlers(app: FastAPI) -> None:
+    """Register exception handlers with the FastAPI application."""
+    
+    @app.exception_handler(ApplicationError)
+    async def application_error_handler(request: Request, exc: ApplicationError) -> JSONResponse:
+        """Handle application errors."""
+        logger.error(f"Application error: {exc.message}", extra=exc.details)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": exc.__class__.__name__,
+                "message": exc.message,
+                "details": exc.details
+            }
+        )
+    
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        """Handle unexpected exceptions."""
+        logger.error(f"Unexpected error: {str(exc)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "InternalServerError",
+                "message": "An unexpected error occurred"
+            }
+        )
