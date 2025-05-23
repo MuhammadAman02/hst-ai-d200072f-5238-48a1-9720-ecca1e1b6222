@@ -1,33 +1,34 @@
 import logging
 import sys
-from logging.handlers import RotatingFileHandler
-
-# Define log format
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s"
-DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-# Create a custom logger
-logger = logging.getLogger("app")
-logger.setLevel(logging.INFO) # Default level, can be overridden by config
-
-# Create handlers
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT))
-
-# File handler (optional, but good for production)
-# Creates a logs directory if it doesn't exist
-import os
-if not os.path.exists('logs'):
-    os.makedirs('logs')
-file_handler = RotatingFileHandler('logs/app.log', maxBytes=1024*1024*5, backupCount=5, encoding='utf-8') # 5MB per file, 5 backup files
-file_handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT))
-
-# Add handlers to the logger
-logger.addHandler(console_handler)
-logger.addHandler(file_handler)
+from typing import Any
 
 def get_logger(name: str) -> logging.Logger:
-    """Returns a logger instance with the specified name, inheriting base config."""
-    return logging.getLogger(name)
-
-# End of logging configuration
+    """
+    Configure and return a logger with the given name.
+    
+    Args:
+        name: The name for the logger
+        
+    Returns:
+        A configured logger instance
+    """
+    logger = logging.getLogger(name)
+    
+    # Only configure if handlers haven't been added yet
+    if not logger.handlers:
+        logger.setLevel(logging.INFO)
+        
+        # Create console handler
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.INFO)
+        
+        # Create formatter
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        handler.setFormatter(formatter)
+        
+        # Add handler to logger
+        logger.addHandler(handler)
+    
+    return logger
