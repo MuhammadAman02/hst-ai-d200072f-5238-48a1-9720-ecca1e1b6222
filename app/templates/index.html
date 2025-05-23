@@ -1,9 +1,49 @@
-{% extends "base.html" %}
-
-{% block title %}Home - My Application{% endblock %}
-
-{% block content %}
-    <h1>Hello, FastAPI!</h1>
-    <p>Welcome to your new FastAPI application, built using our world-class template foundation!</p>
-    <p>Current time: {{ current_time }}</p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Tone Color Advisor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Skin Tone Color Advisor</h1>
+            <p>This application is running with NiceGUI. Please visit the root URL to access the application.</p>
+        </div>
+        <div class="card">
+            <h2>Features</h2>
+            <ul>
+                <li>Upload photos to analyze skin tone</li>
+                <li>Get personalized color recommendations</li>
+                <li>Modify skin tone to see different color palettes</li>
+                <li>View colors that complement your skin tone</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
