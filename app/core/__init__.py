@@ -1,1 +1,1 @@
-# This file makes 'core' a Python package
+# Core application components
