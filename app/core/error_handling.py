@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from typing import Dict, Any, Type, Callable, Union
+from typing import Dict, Any
 import logging
 
 # Get logger
@@ -15,38 +15,17 @@ class ApplicationError(Exception):
         self.details = details or {}
         super().__init__(self.message)
 
-class ValidationError(ApplicationError):
-    """Validation error exception."""
-    
-    def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(message, status_code=400, details=details)
-
-class ProcessingError(ApplicationError):
-    """Processing error exception."""
-    
-    def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(message, status_code=500, details=details)
-
-class ResourceNotFoundError(ApplicationError):
-    """Resource not found exception."""
-    
-    def __init__(self, message: str, details: Dict[str, Any] = None):
-        super().__init__(message, status_code=404, details=details)
-
-# Exception handler mapping
-exception_handlers: Dict[Type[Exception], Callable] = {}
-
 def register_exception_handlers(app: FastAPI) -> None:
-    """Register exception handlers with the FastAPI application."""
+    """Register custom exception handlers with the FastAPI app."""
     
     @app.exception_handler(ApplicationError)
     async def application_error_handler(request: Request, exc: ApplicationError) -> JSONResponse:
-        """Handle application errors."""
+        """Handle application-specific errors."""
         logger.error(f"Application error: {exc.message}", extra=exc.details)
         return JSONResponse(
             status_code=exc.status_code,
             content={
-                "error": exc.__class__.__name__,
+                "error": "application_error",
                 "message": exc.message,
                 "details": exc.details
             }
@@ -54,12 +33,12 @@ def register_exception_handlers(app: FastAPI) -> None:
     
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        """Handle unexpected exceptions."""
+        """Handle unexpected errors."""
         logger.error(f"Unexpected error: {str(exc)}")
         return JSONResponse(
             status_code=500,
             content={
-                "error": "InternalServerError",
+                "error": "internal_server_error",
                 "message": "An unexpected error occurred"
             }
         )
