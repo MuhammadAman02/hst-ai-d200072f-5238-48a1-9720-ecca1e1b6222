@@ -1,24 +1,22 @@
-from pydantic_settings import BaseSettings
-from pydantic import Field
 import os
+from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
-    """Application configuration with validation."""
+    """Application settings with environment variable support."""
     
-    # Application Settings
-    APP_NAME: str = Field(default="Skin Tone Color Advisor")
-    APP_VERSION: str = Field(default="1.0.0")
-    APP_ENV: str = Field(default="development")
-    DEBUG: bool = Field(default=False)
+    # Application settings
+    APP_NAME: str = "Skin Tone Color Advisor"
+    APP_VERSION: str = "1.0.0"
+    APP_ENV: str = "development"
+    DEBUG: bool = True
     
-    # Server Settings
-    HOST: str = Field(default="0.0.0.0")
-    PORT: int = Field(default=8000)
+    # Server settings
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
     
-    # Upload settings
-    UPLOAD_FOLDER: str = Field(default="app/static/uploads")
-    MAX_CONTENT_LENGTH: int = Field(default=16 * 1024 * 1024)  # 16MB max upload
-    ALLOWED_EXTENSIONS: set = Field(default={"png", "jpg", "jpeg"})
+    # File storage
+    UPLOAD_FOLDER: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
     
     class Config:
         env_file = ".env"
